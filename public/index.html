@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Space | Lofi Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background: #0a0a0c; color: #fff; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+        .video-container video { transform: scaleX(-1); object-fit: cover; border-radius: 1rem; width: 100%; height: 100%; }
+        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        @media (min-width: 1024px) { #video-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } }
+        canvas { touch-action: none; cursor: crosshair; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#1e1e2e,0%,#000_100%)]"></div>
+        <div class="absolute top-[-10%] right-[-10%] w-72 h-72 bg-indigo-500/20 blur-[100px] animate-pulse"></div>
+    </div>
+
+    <header class="p-4 glass flex justify-between items-center z-50">
+        <h1 class="text-xl font-bold tracking-tighter text-indigo-400">DEEP_SPACE</h1>
+        <div id="room-id" class="hidden sm:block text-[10px] text-white/30 uppercase tracking-[0.3em]">Room ID: Loading...</div>
+        <div class="flex gap-2">
+            <button onclick="toggleTab('chat')" id="btn-chat" class="px-4 py-2 rounded-full glass text-xs font-bold bg-white/10">CHAT</button>
+            <button onclick="toggleTab('board')" id="btn-board" class="px-4 py-2 rounded-full glass text-xs font-bold">BOARD</button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row p-4 gap-4 overflow-hidden">
+        <div class="flex-[2] flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+            <div id="video-grid"></div>
+            
+            <div class="hidden">
+                <iframe id="lofi-player" src="https://www.youtube.com/embed/rHKCWKZA6RI?autoplay=1&mute=0&loop=1&playlist=rHKCWKZA6RI" allow="autoplay"></iframe>
+            </div>
+        </div>
+
+        <div id="tool-panel" class="flex-1 glass rounded-3xl flex flex-col overflow-hidden min-h-[300px] lg:min-h-0">
+            <div id="chat-section" class="flex flex-col h-full p-4">
+                <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 text-sm text-white/70"></div>
+                <form id="chat-form" class="flex gap-2">
+                    <input id="chat-input" type="text" placeholder="Gửi tin nhắn..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500">
+                </form>
+            </div>
+            <div id="board-section" class="hidden flex-col h-full p-2">
+                <div class="flex-1 bg-white rounded-2xl overflow-hidden relative">
+                    <canvas id="whiteboard" class="w-full h-full"></canvas>
+                    <button onclick="clearCanvas()" class="absolute top-2 right-2 bg-black/50 p-2 rounded-lg text-[10px]">CLEAR</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 glass px-6 py-4 rounded-full flex gap-6 z-[100] shadow-2xl border-white/20">
+        <button onclick="muteMic()" id="mic-btn" class="text-xl hover:scale-125 transition">🎤</button>
+        <button onclick="toggleCam()" id="cam-btn" class="text-xl hover:scale-125 transition">📷</button>
+        <button onclick="toggleMusic()" id="music-btn" class="text-xl hover:scale-125 transition">🎵</button>
+    </div>
+<div id="auth-overlay" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-2xl">
+    <div class="glass p-10 rounded-[3rem] text-center max-w-sm w-full mx-4 shadow-2xl border-white/20">
+        <div class="w-20 h-20 bg-indigo-500 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">
+            🌌
+        </div>
+        <h2 class="text-3xl font-bold mb-2 tracking-tighter">Deep Space</h2>
+        <p class="text-white/50 text-sm mb-8">Đăng nhập để bắt đầu phiên làm việc tập trung cùng mọi người.</p>
+        
+        <button onclick="loginWithGoogle()" class="w-full py-4 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-3 hover:bg-gray-200 transition-all active:scale-95">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+            Tiếp tục với Google
+        </button>
+        
+        <p class="mt-6 text-[10px] text-white/20 uppercase tracking-[0.2em]">Secure by Firebase</p>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  // Cấu hình Firebase của bạn (Lấy từ Firebase Console)
+    const firebaseConfig = {
+    apiKey: "AIzaSyDNy9Rh32Tf5kFeeVS2BygQ-XPrZV5lo2g",
+    authDomain: "webnoi.firebaseapp.com",
+    projectId: "webnoi",
+    storageBucket: "webnoi.firebasestorage.app",
+    messagingSenderId: "889019651682",
+    appId: "1:889019651682:web:140d4559c15ca5419f633b",
+    measurementId: "G-3V9NMC86HT"
+    };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // Hàm đăng nhập
+  window.loginWithGoogle = () => {
+    signInWithPopup(auth, provider).catch(error => console.error(error));
+  };
+
+  // Theo dõi trạng thái đăng nhập
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('auth-overlay').classList.add('hidden');
+      window.currentUser = user; // Lưu thông tin để dùng trong Chat
+      console.log("Logged in as:", user.displayName);
+    } else {
+      document.getElementById('auth-overlay').classList.remove('hidden');
+    }
+  });
+</script>
+    <script src="script.js"></script>
+</body>
+</html>
