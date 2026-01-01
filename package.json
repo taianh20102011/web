@@ -1,0 +1,19 @@
+{
+  "name": "lofi-space",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^5.2.1",
+    "peer": "^1.0.2",
+    "socket.io": "^4.8.3",
+    "uuid": "^13.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

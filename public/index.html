@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lo-fi Space | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+    <div id="auth-screen" class="overlay">
+        <div class="glass-card auth-box">
+            <h1 class="logo-text">✨ Lo-fi Space</h1>
+            
+            <div class="auth-tabs">
+                <button id="tab-login" class="active">Đăng Nhập</button>
+                <button id="tab-register">Đăng Ký</button>
+            </div>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                </div>
+                <button type="submit" class="btn-primary">Vào ngay <i class="fas fa-arrow-right"></i></button>
+                <p id="login-error" class="error-msg"></p>
+            </form>
+
+            <form id="register-form" class="hidden">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="reg-name" placeholder="Tên hiển thị (Nickname)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="reg-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="reg-password" placeholder="Mật khẩu (6+ ký tự)" required>
+                </div>
+                <button type="submit" class="btn-primary">Tạo tài khoản</button>
+                <p id="reg-error" class="error-msg"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <header>
+            <div class="logo">
+                <div class="live-dot"></div> <span id="user-display-name">Guest</span>
+            </div>
+            <div class="controls-top">
+                <button id="logout-btn" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+                <button id="theme-btn"><i class="fas fa-moon"></i></button>
+            </div>
+        </header>
+
+        <main>
+            <div id="video-grid"></div>
+            <canvas id="whiteboard" class="hidden"></canvas>
+            <div id="draw-tools" class="hidden glass-panel">
+                <input type="color" id="color-picker" value="#000000">
+                <button id="clear-board-btn"><i class="fas fa-trash"></i></button>
+                <button id="close-board-btn"><i class="fas fa-times"></i></button>
+            </div>
+        </main>
+
+        <aside id="sidebar">
+            <div class="music-player glass-card">
+                <h3><i class="fas fa-music"></i> Lo-fi Radio</h3>
+                <div id="yt-player"></div>
+                <div class="music-controls">
+                    <button id="play-pause"><i class="fas fa-play"></i></button>
+                    <div class="visualizer"><span></span><span></span><span></span><span></span></div>
+                </div>
+            </div>
+            <div class="chat-container glass-card">
+                <div class="chat-header">Team Chat</div>
+                <div id="chat-messages" class="custom-scroll"></div>
+                <form id="chat-form">
+                    <input type="text" id="msg-input" placeholder="Nhập tin nhắn..." autocomplete="off">
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </aside>
+
+        <nav class="bottom-bar glass-panel">
+            <button id="mic-btn" class="active"><i class="fas fa-microphone"></i></button>
+            <button id="cam-btn" class="active"><i class="fas fa-video"></i></button>
+            <div class="divider"></div>
+            <button id="board-btn"><i class="fas fa-pen"></i></button>
+            <button id="chat-btn"><i class="fas fa-comment-alt"></i></button>
+        </nav>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
